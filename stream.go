@@ -53,6 +53,9 @@ func (v Vehicle) Stream() (chan *StreamEvent, chan error, error) {
 
 // Reads the stream itself from the vehicle
 func readStream(resp *http.Response, eventChan chan *StreamEvent, errChan chan error) {
+	defer close(eventChan)
+	defer close(errChan)
+
 	reader := bufio.NewReader(resp.Body)
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
@@ -67,10 +70,6 @@ func readStream(resp *http.Response, eventChan chan *StreamEvent, errChan chan e
 		}
 	}
 	errChan <- ErrStreamClosed
-
-	// As the goroutine exists we should close the channels
-	close(eventChan)
-	close(errChan)
 }
 
 // Parses the stream event, setting all of the appropriate data types
