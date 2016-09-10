@@ -65,6 +65,10 @@ func readStream(resp *http.Response, eventChan chan *StreamEvent, errChan chan e
 		}
 	}
 	errChan <- errors.New("HTTP stream closed")
+
+	// As the goroutine exists we should close the channels
+	close(eventChan)
+	close(errChan)
 }
 
 // Parses the stream event, setting all of the appropriate data types
