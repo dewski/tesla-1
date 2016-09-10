@@ -10,8 +10,10 @@ import (
 )
 
 var (
-	StreamParams = "speed,odometer,soc,elevation,est_heading,est_lat,est_lng,power,shift_state,range,est_range,heading"
-	StreamingURL = "https://streaming.vn.teslamotors.com"
+	ErrStreamClosed       = errors.New("HTTP stream closed")
+	ErrStreamEventInvalid = errors.New("Bad message from Tesla API stream")
+	StreamParams          = "speed,odometer,soc,elevation,est_heading,est_lat,est_lng,power,shift_state,range,est_range,heading"
+	StreamingURL          = "https://streaming.vn.teslamotors.com"
 )
 
 // The event returned by the vehicle by the Tesla API
@@ -64,7 +66,7 @@ func readStream(resp *http.Response, eventChan chan *StreamEvent, errChan chan e
 			errChan <- err
 		}
 	}
-	errChan <- errors.New("HTTP stream closed")
+	errChan <- ErrStreamClosed
 
 	// As the goroutine exists we should close the channels
 	close(eventChan)
@@ -75,7 +77,7 @@ func readStream(resp *http.Response, eventChan chan *StreamEvent, errChan chan e
 func parseStreamEvent(event string) (*StreamEvent, error) {
 	data := strings.Split(event, ",")
 	if len(data) != 13 {
-		return nil, errors.New("Bad message from Tesla API stream")
+		return nil, ErrStreamEventInvalid
 	}
 
 	streamEvent := &StreamEvent{}
@@ -93,5 +95,6 @@ func parseStreamEvent(event string) (*StreamEvent, error) {
 	streamEvent.Range, _ = strconv.Atoi(data[10])
 	streamEvent.EstRange, _ = strconv.Atoi(data[11])
 	streamEvent.Heading, _ = strconv.Atoi(data[12])
+
 	return streamEvent, nil
 }
