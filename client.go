@@ -46,9 +46,6 @@ func NewClient(auth *Auth) (*Client, error) {
 	if auth.URL == "" {
 		auth.URL = BaseURL
 	}
-	if auth.StreamingURL == "" {
-		auth.StreamingURL = StreamingURL
-	}
 
 	client := &Client{
 		Auth: auth,
