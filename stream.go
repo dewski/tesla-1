@@ -68,20 +68,24 @@ func basicauthConnect(conn *streamConn) (*http.Response, error) {
 	req.Method = "GET"
 	req.Header = http.Header{}
 	req.Header.Set("Authorization", conn.authData)
+	log.Debug()
 
 	// log.Debug(req.Header)
 	resp, err := conn.client.Do(&req)
 
 	if err != nil {
-		log.Debugf("Could not connect to stream %+v", err)
+		log.Debugf("Could not connect to stream %+v with %s", err, conn.authData)
 		log.Error(err)
 		return nil, err
 	} else {
-		log.Debugf("connected to %s \n\thttp status = %v", conn.url, resp.Status)
-		// log.Debug(resp.Header)
-		// for n, v := range resp.Header {
-		// 	log.Debug(n, v[0])
-		// }
+		log.Debugf("connected to %s \n\thttp status = %v\n\tauth=%s", conn.url, resp.Status, conn.authData)
+
+		if resp.StatusCode == 401 {
+			log.Debug(resp.Header)
+			for n, v := range resp.Header {
+				log.Debug(n, v[0])
+			}
+		}
 	}
 
 	return resp, nil
@@ -156,6 +160,7 @@ func encodedAuth(user, pwd string) string {
 	encoder := base64.NewEncoder(base64.StdEncoding, &buf)
 	encoder.Write([]byte(user + ":" + pwd))
 	encoder.Close()
+	log.Debugf("username=%s password=%s auth=%s", user, pwd, buf.String())
 	return buf.String()
 }
 
