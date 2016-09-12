@@ -15,8 +15,6 @@ type Auth struct {
 	ClientSecret string `json:"client_secret"`
 	Email        string `json:"email"`
 	Password     string `json:"password"`
-	URL          string
-	StreamingURL string
 }
 
 // The token and related elements returned after a successful auth
@@ -43,37 +41,32 @@ var (
 
 // Generates a new client for the Tesla API
 func NewClient(auth *Auth) (*Client, error) {
-	if auth.URL == "" {
-		auth.URL = BaseURL
-	}
-
 	client := &Client{
 		Auth: auth,
 		HTTP: &http.Client{},
 	}
-	token, err := client.authorize(auth)
+	err := client.Authorize()
 	if err != nil {
 		return nil, err
 	}
-	client.Token = token
-	ActiveClient = client
 	return client, nil
 }
 
 // Authorizes against the Tesla API with the appropriate credentials
-func (c Client) authorize(auth *Auth) (*Token, error) {
-	auth.GrantType = "password"
-	data, _ := json.Marshal(auth)
+func (c *Client) Authorize() error {
+	data, _ := json.Marshal(c.Auth)
 	body, err := c.post(AuthURL, data)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	token := &Token{}
 	err = json.Unmarshal(body, token)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return token, nil
+	c.Token = token
+	ActiveClient = c
+	return nil
 }
 
 // // Calls an HTTP DELETE
